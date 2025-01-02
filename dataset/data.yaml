@@ -1,0 +1,7 @@
+names:
+  0: victory_point
+  1: military_power
+  2: blue_card
+  3: card-skeleton
+path: .
+train: train.txt
