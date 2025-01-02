@@ -6,15 +6,15 @@ import random
 def denormalize_keypoints(keypoints: np.ndarray, image_shape: tuple[int, int]):
     height, width = image_shape[:2]
     denormalized = keypoints.copy()
-    denormalized[:, 0] *= width
-    denormalized[:, 1] *= height
+    denormalized[1::2] *= width
+    denormalized[2::2] *= height
     return denormalized
 
 def normalize_keypoints(keypoints: np.ndarray, image_shape: tuple[int, int]):
     height, width = image_shape[:2]
     normalized = keypoints.copy()
-    normalized[:, :, 0] /= width
-    normalized[:, :, 1] /= height
+    normalized[1::2] /= width
+    normalized[2::2] /= height
     return normalized
 
 def read_data(basepath, filename):
@@ -23,15 +23,14 @@ def read_data(basepath, filename):
     resize_ratio = (400 / float(image.shape[0]))
     image = cv2.resize(image, None, fx = resize_ratio, fy = resize_ratio)
 
-    polylines = denormalize_keypoints(np.delete(np.loadtxt(f'{basepath}/labels/train/{filename}.txt'), 0).reshape(-1, 2), image.shape)
+    polyline = denormalize_keypoints(np.loadtxt(f'{basepath}/labels/train/{filename}.txt'), image.shape)
     # fix when more labels per card?
-    return image, np.array([polylines])
+    return image, np.array([polyline])
 
 def write_data(image, polylines, basepath, type, filename):
-    # image = cv2.polylines(image, [np.array(polyline, dtype=np.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=7)
+    # image = cv2.polylines(image, [np.array(polyline[1:].reshape(-1, 2), dtype=np.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=7)
     cv2.imwrite(f'{basepath}/images/{type}/{filename}.jpg', image)
-    polylines = np.insert(normalize_keypoints(polylines, image.shape).reshape(-1, 8), 0, 2, axis=1)
-    np.savetxt(f'{basepath}/labels/{type}/{filename}.txt', polylines, '%d %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f')
+    np.savetxt(f'{basepath}/labels/{type}/{filename}.txt', [normalize_keypoints(polyline, image.shape) for polyline in polylines.reshape(-1, 9)], '%d %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f')
 
 def augment(image, polylines, count):
     augmentation = A.Compose(
@@ -43,21 +42,23 @@ def augment(image, polylines, count):
     )
     
     for i in range(count):
-        augmented = augmentation(image=image, keypoints=np.concatenate(polylines))
-        yield i, augmented['image'], augmented['keypoints'].reshape(polylines.shape)
+        augmented = augmentation(image=image, keypoints=polylines[:,1:].reshape(-1, 2))
+        tmp = polylines.copy()
+        tmp[:,1:] = augmented['keypoints'].reshape(-1, 8)
+        yield i, augmented['image'], tmp
 
 def stack(image1, polylines1, image2, polylines2):
     h1, w1 = image1.shape[:2]
     h2, w2 = image2.shape[:2]
 
-    shift = int(max(np.concatenate(polylines1[:,:,1])))
+    shift = int(max(np.concatenate(polylines1[:,2::2])))
     image = np.zeros((max(h1, h2 + shift), max(w1, w2), 3), np.uint8)
 
     image[:h1, :w1, :3] = image1
     image[shift:shift + h2, :w2, :3] = image2
 
     new_polylines2 = polylines2.copy()
-    new_polylines2[:,:, 1] += shift
+    new_polylines2[:,2::2] += shift
 
     return image, np.concatenate((polylines1, new_polylines2))
 
@@ -73,8 +74,8 @@ def embed(background, image, polylines):
     background[yoff:yoff + ih, xoff:xoff + iw] = image
 
     polylines = polylines.copy()
-    polylines[:,:, 1] += yoff
-    polylines[:,:, 0] += xoff
+    polylines[:,2::2] += yoff
+    polylines[:,1::2] += xoff
 
     return background, polylines
 
@@ -87,8 +88,8 @@ def crop(image, polylines):
 def augment_demo():
     image, polylines = read_data('./dataset', 'age1_3p_altar')
 
-    for i, image, polylines in augment(image, polylines):
-        write_data(image, polylines, 'stuff', f'age1_3p_altar_{i:03}')
+    for i, image, polylines in augment(image, polylines, 10):
+        write_data(image, polylines, 'stuff', 'train', f'age1_3p_altar_{i:03}')
 
 def stack_demo():
     image1, polylines1 = read_data('./dataset', 'age1_3p_altar')
@@ -118,8 +119,8 @@ def combo_demo():
     image, polylines = stack(image1, polylines1, image2, polylines2)
     image, polylines = stack(image, polylines, image3, polylines3)
 
-    for i, image, polylines in augment(image, polylines):
-        write_data(image, polylines, 'stuff2', f'combo_{i:03}')
+    for i, image, polylines in augment(image, polylines, 10):
+        write_data(image, polylines, 'stuff2', 'train', f'combo_{i:03}')
 
 def stuff():
     blue_cards = [
@@ -148,11 +149,38 @@ def stuff():
         read_data('./dataset', 'age3_5p_senate'),
         read_data('./dataset', 'age3_6p_pantheon'),
         read_data('./dataset', 'age3_6p_town_hall'),
-        read_data('./dataset', 'age3_7p_palace')
+        read_data('./dataset', 'age3_7p_palace'),
+    ]
+
+    green_cards = [
+        read_data('./dataset', 'age1_3p_apothecary'),
+        read_data('./dataset', 'age1_3p_scriptorium'),
+        read_data('./dataset', 'age1_3p_workshop'),
+        read_data('./dataset', 'age1_4p_scriptorium'),
+        read_data('./dataset', 'age1_5p_apothecary'),
+        read_data('./dataset', 'age1_7p_workshop'),
+        read_data('./dataset', 'age2_3p_dispensary'),
+        read_data('./dataset', 'age2_3p_laboratory'),
+        read_data('./dataset', 'age2_3p_library'),
+        read_data('./dataset', 'age2_3p_school'),
+        read_data('./dataset', 'age2_4p_dispensary'),
+        read_data('./dataset', 'age2_5p_laboratory'),
+        read_data('./dataset', 'age2_6p_library'),
+        read_data('./dataset', 'age2_7p_school'),
+        read_data('./dataset', 'age3_3p_academy'),
+        read_data('./dataset', 'age3_3p_lodge'),
+        read_data('./dataset', 'age3_3p_observatory'),
+        read_data('./dataset', 'age3_3p_study'),
+        read_data('./dataset', 'age3_3p_university'),
+        read_data('./dataset', 'age3_4p_university'),
+        read_data('./dataset', 'age3_5p_study'),
+        read_data('./dataset', 'age3_6p_lodge'),
+        read_data('./dataset', 'age3_7p_academy'),
+        read_data('./dataset', 'age3_7p_obsersvatory'),
     ]
 
     for k in range(20):
-        cards = random.sample(blue_cards, random.randint(3, 6))
+        cards = random.sample(green_cards, random.randint(3, 6))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
@@ -162,10 +190,10 @@ def stuff():
 
         image, polylines = embed(background, image, polylines)
         for i, image, polylines in augment(image, polylines, 100):
-            write_data(image, polylines, 'new_dataset', 'train', f'train_{(k * 100 + i):04}')
+            write_data(image, polylines, 'new_dataset_green', 'train', f'train_{(k * 100 + i):04}')
 
     for k in range(20):
-        cards = random.sample(blue_cards, random.randint(3, 6))
+        cards = random.sample(green_cards, random.randint(3, 6))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
@@ -175,6 +203,6 @@ def stuff():
 
         image, polylines = embed(background, image, polylines)
         for i, image, polylines in augment(image, polylines, 5):
-            write_data(image, polylines, 'new_dataset', 'val', f'val_{(k * 5 + i):04}')
+            write_data(image, polylines, 'new_dataset_green', 'val', f'val_{(k * 5 + i):04}')
 
 stuff()
