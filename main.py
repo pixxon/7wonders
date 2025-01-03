@@ -19,13 +19,9 @@ def normalize_keypoints(keypoints: np.ndarray, image_shape: tuple[int, int]):
 
 def read_data(basepath, filename):
     image = cv2.imread(f'{basepath}/images/train/{filename}.jpg')
-
     resize_ratio = (400 / float(image.shape[0]))
     image = cv2.resize(image, None, fx = resize_ratio, fy = resize_ratio)
-
-    polyline = denormalize_keypoints(np.loadtxt(f'{basepath}/labels/train/{filename}.txt'), image.shape)
-    # fix when more labels per card?
-    return image, np.array([polyline])
+    return image, np.array([denormalize_keypoints(polyline, image.shape) for polyline in np.loadtxt(f'{basepath}/labels/train/{filename}.txt').reshape(-1, 9)])
 
 def write_data(image, polylines, basepath, type, filename):
     # image = cv2.polylines(image, [np.array(polyline[1:].reshape(-1, 2), dtype=np.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=7)
@@ -35,7 +31,7 @@ def write_data(image, polylines, basepath, type, filename):
 def augment(image, polylines, count):
     augmentation = A.Compose(
         [
-            A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.5, rotate_limit=180, p=1, border_mode=cv2.BORDER_CONSTANT),
+            A.ShiftScaleRotate(shift_limit=0.2, scale_limit=(-0.8, 0.5), rotate_limit=180, p=1, border_mode=cv2.BORDER_CONSTANT),
             A.RandomBrightnessContrast(brightness_limit=(-0.4, 0.4), p=0.4),
         ],
         keypoint_params=A.KeypointParams(format='xy', remove_invisible=False)
