@@ -2,6 +2,15 @@ names:
   0: victory_point
   1: military_power
   2: blue_card
-  3: card-skeleton
+  3: green_card_tablet
+  4: green_card_compass
+  5: green_card_cog
+  6: blue_card_3
+  7: blue_card_4
+  8: blue_card_5
+  9: blue_card_6
+  10: blue_card_7
+  11: blue_card_8
+  12: green_card
 path: .
 train: train.txt
