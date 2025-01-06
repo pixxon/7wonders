@@ -144,4 +144,4 @@ def invoke_main() -> None:
     launch(main, 1)
 
 if __name__ == "__main__":
-    invoke_main()  # pragma: no cover
+    main()  # pragma: no cover

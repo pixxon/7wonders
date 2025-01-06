@@ -48,7 +48,7 @@ cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8   # set a custom testing threshold
 predictor = DefaultPredictor(cfg)
 
 from detectron2.utils.visualizer import ColorMode, Visualizer
-im = cv2.imread("20250103/test.jpg")
+im = cv2.imread("test.jpg")
 outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
 v = Visualizer(im[:, :, ::-1],
     metadata=balloon_metadata, 
@@ -56,4 +56,4 @@ v = Visualizer(im[:, :, ::-1],
     instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
 )
 out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-cv2.imwrite("test.jpg", out.get_image()[:, :, ::-1])
+cv2.imwrite("result.jpg", out.get_image()[:, :, ::-1])
