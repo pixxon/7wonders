@@ -175,8 +175,10 @@ def stuff():
         read_data('./dataset', 'age3_7p_obsersvatory'),
     ]
 
+    all_cards = green_cards + blue_cards
+
     for k in range(20):
-        cards = random.sample(green_cards, random.randint(3, 6))
+        cards = random.sample(all_cards, random.randint(3, 6))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
@@ -186,10 +188,10 @@ def stuff():
 
         image, polylines = embed(background, image, polylines)
         for i, image, polylines in augment(image, polylines, 100):
-            write_data(image, polylines, 'new_dataset_green', 'train', f'train_{(k * 100 + i):04}')
+            write_data(image, polylines, 'new_dataset_mixed', 'train', f'train_{(k * 100 + i):04}')
 
     for k in range(20):
-        cards = random.sample(green_cards, random.randint(3, 6))
+        cards = random.sample(all_cards, random.randint(3, 6))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
@@ -199,6 +201,48 @@ def stuff():
 
         image, polylines = embed(background, image, polylines)
         for i, image, polylines in augment(image, polylines, 5):
-            write_data(image, polylines, 'new_dataset_green', 'val', f'val_{(k * 5 + i):04}')
+            write_data(image, polylines, 'new_dataset_mixed', 'val', f'val_{(k * 5 + i):04}')
+
+def other_stuff():
+    green_cards = [
+        read_data('./dataset', 'age1_3p_apothecary'),
+        read_data('./dataset', 'age1_3p_scriptorium'),
+        read_data('./dataset', 'age1_3p_workshop'),
+        read_data('./dataset', 'age1_4p_scriptorium'),
+        read_data('./dataset', 'age1_5p_apothecary'),
+        read_data('./dataset', 'age1_7p_workshop'),
+        read_data('./dataset', 'age2_3p_dispensary'),
+        read_data('./dataset', 'age2_3p_laboratory'),
+        read_data('./dataset', 'age2_3p_library'),
+        read_data('./dataset', 'age2_3p_school'),
+        read_data('./dataset', 'age2_4p_dispensary'),
+        read_data('./dataset', 'age2_5p_laboratory'),
+        read_data('./dataset', 'age2_6p_library'),
+        read_data('./dataset', 'age2_7p_school'),
+        read_data('./dataset', 'age3_3p_academy'),
+        read_data('./dataset', 'age3_3p_lodge'),
+        read_data('./dataset', 'age3_3p_observatory'),
+        read_data('./dataset', 'age3_3p_study'),
+        read_data('./dataset', 'age3_3p_university'),
+        read_data('./dataset', 'age3_4p_university'),
+        read_data('./dataset', 'age3_5p_study'),
+        read_data('./dataset', 'age3_6p_lodge'),
+        read_data('./dataset', 'age3_7p_academy'),
+        read_data('./dataset', 'age3_7p_obsersvatory'),
+    ]
+
+    for k in range(20):
+        image, polylines = random.choice(green_cards)
+        h, _, _ = image.shape
+        image = image[:int(h / 2),:]
+        for i, image, polylines in augment(image, polylines, 100):
+            write_data(image, polylines, 'new_dataset_small_green', 'train', f'train_{(k * 100 + i):04}')
+
+    for k in range(20):
+        image, polylines = random.choice(green_cards)
+        h, _, _ = image.shape
+        image = image[:int(h / 2),:]
+        for i, image, polylines in augment(image, polylines, 5):
+            write_data(image, polylines, 'new_dataset_small_green', 'val', f'val_{(k * 5 + i):04}')
 
 stuff()
