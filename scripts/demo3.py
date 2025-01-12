@@ -12,21 +12,9 @@ from detectron2.engine import DefaultPredictor
 import numpy as np
 import os, json, cv2, random
 
-MetadataCatalog.get("cards").set(thing_classes=[
-    "card",
-    "military_power",
-    "blue_card",
-    "green_card_tablet",
-    "green_card_compass",
-    "green_card_cog",
-    "blue_card_3",
-    "blue_card_4",
-    "blue_card_5",
-    "blue_card_6",
-    "blue_card_7",
-    "blue_card_8",
-    "green_card"
-])
+from utils.database import classes
+
+MetadataCatalog.get("cards").set(thing_classes=classes)
 balloon_metadata = MetadataCatalog.get("cards")
 
 cfg = get_cfg()
@@ -40,7 +28,8 @@ cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
 cfg.SOLVER.MAX_ITER = 300    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
 cfg.SOLVER.STEPS = []        # do not decay learning rate
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # The "RoIHead batch size". 128 is faster, and good enough for this toy dataset (default: 512)
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 13  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 18  # only has one class (ballon). (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+cfg.OUTPUT_DIR = 'mask_rcnn_R_50_DC5_3x'
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
 
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
