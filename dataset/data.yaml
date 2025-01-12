@@ -12,5 +12,10 @@ names:
   10: blue_card_7
   11: blue_card_8
   12: green_card
+  13: yellow_card
+  14: grey_card
+  15: brown_card
+  16: red_card
+  17: purple_card
 path: .
 train: train.txt
