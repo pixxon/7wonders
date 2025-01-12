@@ -21,7 +21,7 @@ def read_card(basepath, filename, type='train'):
     return image, numpy.array([denormalize_keypoints(polyline, image.shape) for polyline in numpy.loadtxt(f'{basepath}/labels/{type}/{filename}.txt').reshape(-1, 9) if polyline[0] in [2, 12, 13, 14, 15, 16, 17]])
 
 def write_card(image, polylines, basepath, type, filename):
-    image = cv2.polylines(image, [numpy.array(polyline[1:].reshape(-1, 2), dtype=numpy.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=4)
+    # image = cv2.polylines(image, [numpy.array(polyline[1:].reshape(-1, 2), dtype=numpy.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=4)
     cv2.imwrite(f'{basepath}/images/{type}/{filename}.jpg', image)
     numpy.savetxt(f'{basepath}/labels/{type}/{filename}.txt', [normalize_keypoints(polyline, image.shape) for polyline in polylines.reshape(-1, 9)], '%d %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f')
 

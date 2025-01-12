@@ -1,20 +1,19 @@
 from albumentations import Compose, ShiftScaleRotate, RandomBrightnessContrast, KeypointParams
 import numpy, cv2
 
-def augment(image, polylines, count):
+def augment(image, polylines):
     augmentation = Compose(
         [
             ShiftScaleRotate(shift_limit=0.2, scale_limit=(-0.8, 0.5), rotate_limit=180, p=1, border_mode=cv2.BORDER_CONSTANT),
-            RandomBrightnessContrast(brightness_limit=(-0.4, 0.4), p=0.4),
+#            RandomBrightnessContrast(brightness_limit=(-0.4, 0.4), p=0.4),
         ],
         keypoint_params=KeypointParams(format='xy', remove_invisible=False)
     )
     
-    for i in range(count):
-        augmented = augmentation(image=image, keypoints=polylines[:,1:].reshape(-1, 2))
-        tmp = polylines.copy()
-        tmp[:,1:] = augmented['keypoints'].reshape(-1, 8)
-        yield i, augmented['image'], tmp
+    augmented = augmentation(image=image, keypoints=polylines[:,1:].reshape(-1, 2))
+    new_polylines = polylines.copy()
+    new_polylines[:,1:] = augmented['keypoints'].reshape(-1, 8)
+    return augmented['image'], new_polylines
 
 def stack(image1, polylines1, image2, polylines2):
     h1, w1 = image1.shape[:2]

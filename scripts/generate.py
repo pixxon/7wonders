@@ -1,60 +1,43 @@
-import cv2
-import random
+import cv2, random, os, shutil
 
-from .utils.database import green_cards, blue_cards, write_card
-from .utils.augment import augment, stack, embed
+from utils.database import all_cards, write_card
+from utils.augment import augment, stack, embed, resize
 
 def generate_new_database(folder):
-    for k in range(20):
-        cards = random.sample(green_cards, random.randint(3, 6))
-        image, polylines = cards[0]
-        for img, pol in cards[1:]:
-            image, polylines = stack(image, polylines, img, pol)
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+    os.makedirs(f'{folder}/images/train')
+    os.makedirs(f'{folder}/labels/train')
+    os.makedirs(f'{folder}/images/val')
+    os.makedirs(f'{folder}/labels/val')
 
-        background = cv2.imread(f'chequered_0215.jpg')
-        background = cv2.resize(background, (2000, 2000))
-
-        image, polylines = embed(background, image, polylines)
-        for i, image, polylines in augment(image, polylines, 100):
-            write_card(image, polylines, folder, 'train', f'train_{(k * 100 + i):04}')
-
-    for k in range(20):
-        cards = random.sample(green_cards, random.randint(3, 6))
-        image, polylines = cards[0]
-        for img, pol in cards[1:]:
-            image, polylines = stack(image, polylines, img, pol)
-
-        background = cv2.imread(f'chequered_0215.jpg')
-        background = cv2.resize(background, (2000, 2000))
-
-        image, polylines = embed(background, image, polylines)
-        for i, image, polylines in augment(image, polylines, 5):
-            write_card(image, polylines, folder, 'val', f'val_{(k * 5 + i):04}')
+    background = cv2.imread(f'chequered_0215.jpg')
+    background = cv2.resize(background, (640, 640))
     
-    for k in range(20):
-        cards = random.sample(blue_cards, random.randint(3, 6))
+    for k in range(20000):
+        cards = [all_cards[k % len(all_cards)]] + random.sample(all_cards, random.randint(2, 5))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
 
-        background = cv2.imread(f'chequered_0215.jpg')
-        background = cv2.resize(background, (2000, 2000))
-
+        old_height, old_width = image.shape[:2]
+        image, polylines = resize(image, polylines, 400, (int)(old_width * (400 / old_height)))
         image, polylines = embed(background, image, polylines)
-        for i, image, polylines in augment(image, polylines, 100):
-            write_card(image, polylines, folder, 'train', f'train_{(k * 100 + i + 2000):04}')
+        image, polylines = augment(image, polylines)
 
-    for k in range(20):
-        cards = random.sample(blue_cards, random.randint(3, 6))
+        write_card(image, polylines, 'new_dataset', 'train', f'train_{k}')
+    
+    for k in range(5000):
+        cards = [all_cards[k % len(all_cards)]] + random.sample(all_cards, random.randint(2, 5))
         image, polylines = cards[0]
         for img, pol in cards[1:]:
             image, polylines = stack(image, polylines, img, pol)
 
-        background = cv2.imread(f'chequered_0215.jpg')
-        background = cv2.resize(background, (2000, 2000))
-
+        old_height, old_width = image.shape[:2]
+        image, polylines = resize(image, polylines, 400, (int)(old_width * (400 / old_height)))
         image, polylines = embed(background, image, polylines)
-        for i, image, polylines in augment(image, polylines, 5):
-            write_card(image, polylines, folder, 'val', f'val_{(k * 5 + i + 100):04}')
+        image, polylines = augment(image, polylines)
 
-generate_new_database('new_database')
+        write_card(image, polylines, 'new_dataset', 'val', f'val_{k}')
+
+generate_new_database('new_dataset')
