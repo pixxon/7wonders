@@ -13,7 +13,7 @@ import numpy as np
 import os, json, cv2, random
 
 MetadataCatalog.get("cards").set(thing_classes=[
-    "victory_point",
+    "card",
     "military_power",
     "blue_card",
     "green_card_tablet",
@@ -44,7 +44,7 @@ cfg.MODEL.ROI_HEADS.NUM_CLASSES = 13  # only has one class (ballon). (see https:
 # NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
 
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8   # set a custom testing threshold
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.3   # set a custom testing threshold
 predictor = DefaultPredictor(cfg)
 
 from detectron2.utils.visualizer import ColorMode, Visualizer
