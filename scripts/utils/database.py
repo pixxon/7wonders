@@ -1,4 +1,4 @@
-import cv2, numpy
+import cv2, numpy, os
 
 def normalize_keypoints(keypoints: numpy.ndarray, image_shape: tuple[int, int]):
     height, width = image_shape[:2]
@@ -24,6 +24,19 @@ def write_card(image, polylines, basepath, type, filename):
     # image = cv2.polylines(image, [numpy.array(polyline[1:].reshape(-1, 2), dtype=numpy.int32) for polyline in polylines], isClosed=True, color=(255, 0, 255), thickness=4)
     cv2.imwrite(f'{basepath}/images/{type}/{filename}.jpg', image)
     numpy.savetxt(f'{basepath}/labels/{type}/{filename}.txt', [normalize_keypoints(polyline, image.shape) for polyline in polylines.reshape(-1, 9)], '%d %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f')
+
+def read_backgrounds(folder):
+    for subdir, dirs, files in os.walk(folder):
+        for file in files:
+            path = os.path.join(subdir, file)
+            background = cv2.imread(path)
+            background = cv2.resize(background, (640, 640))
+            yield background
+        for dir in dirs:
+            path = os.path.join(subdir, dir)
+            read_backgrounds(path)
+
+backgrounds = list(read_backgrounds('./dataset/backgrounds'))
 
 brown_cards = [
     read_card('./dataset', 'age1_3p_clay_pit'),

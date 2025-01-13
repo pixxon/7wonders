@@ -9,7 +9,7 @@ import numpy, os, cv2, torch, random
 
 from albumentations import Compose, ShiftScaleRotate, RandomBrightnessContrast, KeypointParams
 
-from utils.database import all_cards, classes
+from utils.database import all_cards, classes, backgrounds
 from utils.augment import resize, stack, embed
 
 def generated_mapper(dataset_dict):
@@ -22,14 +22,13 @@ def generated_mapper(dataset_dict):
     old_height, old_width = image.shape[:2]
     image, polylines = resize(image, polylines, 400, (int)(old_width * (400 / old_height)))
 
-    background = cv2.imread(f'chequered_0215.jpg')
-    background = cv2.resize(background, (640, 640))
+    background = random.choice(backgrounds)
     image, polylines = embed(background, image, polylines)
 
     augmentation = Compose(
         [
             ShiftScaleRotate(shift_limit=0.2, scale_limit=(-0.8, 0.5), rotate_limit=180, p=1, border_mode=cv2.BORDER_CONSTANT),
-#            RandomBrightnessContrast(brightness_limit=(-0.4, 0.4), p=0.4),
+            RandomBrightnessContrast(brightness_limit=(-0.2, 0.2), p=0.4),
         ],
         keypoint_params=KeypointParams(format='xy', remove_invisible=False)
     )
